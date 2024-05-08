@@ -1,0 +1,63 @@
+//------------- PROGRAM FOR GENERATING A 3 PHASE SINGLE, EACH OF 120 DEGREE PHASE SHIFT FOR
+1KHZ FREQUENCY-------------------------
+//------------- SO WE HAVE TAKEN 3 TIMERS EACH OF 16 BIT AUTO-RELOAD MODE---------------------------------
+-------------------------
+//------------- TIMER 2, 3 & 4 ARE IN USE WITH THE TERMINALS P2.1, P2.2 & P2.3--------------------------------------
+---------------
+ORG 0000H
+LJMP MAIN // JUMP TO MAIN
+
+//------------- TIMER 2 ADDRESS..-----------------------------------------------------------
+//------------- SET P2.1 -------------------------------------------------------------------
+//------------- LOAD TIMER 2----------------------------------------------------------------
+ORG 002BH // TIMER 2 SUBROUTINE
+CPL P2.1 // COMPLIMENT P2.1
+MOV TH2, #0FD65H // LOAD TIMER 2
+MOV TL2, #0FD65H // LOAD TIMER 2
+CLR TF2 // CLEAR TIMER 2 OVERFLOW
+RETI // RETURN INTERRUPT
+
+//-------------- DELAY TIME FOR PHASE 2-----------------------------------------------------
+DELAY: MOV R0, #01B9H // LOAD DIRRECT VALUES
+LOOP: DEC R0 // DECREMENT IF NOT ZERO R0 RESISTER
+JNZ LOOP // JUMP IF NOT ZERO LOOP
+//------------- TIMER 3 ADDRESS.. // SET P2.2 // LOAD TIMER 3-----------------------------
+
+ORG 0073H // ADDRESS TO INTERREPT HANDLER OF TIMER 3 OVERLOAD
+CPL P2.2 // SET P2.2
+MOV TMR3RLL, #0FD65H // LOAD TIMER 3 L
+MOV TMR3RLH, #0FD65H // LOAD TIMER 3 H
+CLR TF3 // CLEAR TIMER 3 OVERFLOW
+SET TR3 // SET TIMER 3 OVERFLOW
+
+//------------ DELAY TIME FOR PHASE 3-------------------------------------------------------
+DELAY1: MOV R2, #0298H // LOAD DIRECT VALUES
+LOOP: DEC R2 // DECREMENT IF NOT ZERO TO R2 RESISTER
+JNZ LOOP // JUMP IF NOT ZERO LOOP
+
+----------- // TIMER 4 ADDRESS.. // SET P2 // LOAD TIMER 4------------------------------------
+ORG 0083H // ADDRESS TO INTERREPT HANDLER OF TIMER 3 OVERLOAD
+
+CPL P2.3 // COMPLIMENT P2.3
+MOV RCAP4L, #0FD65H // LOAD TIMER 4 L
+MOV RCAP4H, #0FD65H // LOAD TIMER 4 H
+CLR TF4 // CLEAR TIMER 4 OVERFLOW
+SET TR4 // SET TIMER 4 OVERFLOW
+
+//------------- LOCATION OF MAIN SUBROUTINE-------------------------------------------------
+ORG 0100H
+MAIN: MOV OSCICN,#017H // INTERNAL OSCILLATOR
+//------------- ENABLE INTERNAL OSCILLATOR FREQUENCY FLAG ----------------------------------
+//------------- ENABLE INTERNAL OSCILLATOR AS SYSTEM CLOCK ---------------------------------
+//------------- INTERNAL OSCILLATOR ENABLE -------------------------------------------------
+//------------- INTERNAL OSCILLATOR ENABLE, FREQUENCY IS 16MHZ -----------------------------
+
+MOV WDTCN.#0deH // WATCHDOG TIMMER
+MOV WDTCM,#0adH // WATCHDOG TIMMER
+MOV XBR1,#0AH // ENABLE INTERRUPTS, TIMERS & SYSTEM CLOCK
+MOV XBR2,#040H // ENABLE CROSSBAR
+MOV IE, #0AH // ENABLE INTERRUPT AND TIMER 2
+
+MOV T2CON, #04H // ENABLE TIMER 2 MODE 1 : 16 BIT AUTO RELOAD
+MOV EIE2, 05H // ENABLE TIMER OVERFLOW 3 & 4
+HERE: JMP HERE // JUMP TO HERE
